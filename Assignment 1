@@ -1,0 +1,100 @@
+import java.util.*;
+
+class CustomerOrder {
+    int id;
+    long timestamp;
+
+    CustomerOrder(int id, long timestamp) {
+        this.id = id;
+        this.timestamp = timestamp;
+    }
+
+    @Override
+    public String toString() {    
+        return "OrderID: " + id + ", Time: " + timestamp;
+    }
+}
+
+class MergeSortOrders {
+    private CustomerOrder[] array;
+    private CustomerOrder[] tempMerge;
+    private int length;
+
+    public void sort(CustomerOrder[] inputArr) {
+        this.array = inputArr;
+        this.length = inputArr.length;
+        this.tempMerge = new CustomerOrder[length];
+        divideArray(0, length - 1);
+    }
+
+    private void divideArray(int low, int high) {
+        if (low < high) {
+            int mid = (low + high) / 2;
+            divideArray(low, mid);
+            divideArray(mid + 1, high);
+            mergeArray(low, mid, high);
+        }
+    }
+
+    private void mergeArray(int low, int mid, int high) {
+        for (int i = low; i <= high; i++) {
+            tempMerge[i] = array[i];
+        }
+
+        int left = low;
+        int right = mid + 1;
+        int current = low;
+
+        while (left <= mid && right <= high) {
+            if (tempMerge[left].timestamp <= tempMerge[right].timestamp) {
+                array[current] = tempMerge[left];
+                left++;
+            } else {
+                array[current] = tempMerge[right];
+                right++;
+            }
+            current++;
+        }
+
+        while (left <= mid) {
+            array[current] = tempMerge[left];
+            current++;
+            left++;
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        Random rand = new Random();
+
+        System.out.print("Enter number of orders: ");
+        int n = sc.nextInt();
+
+        CustomerOrder[] orders = new CustomerOrder[n];
+
+        for (int i = 0; i < n; i++) {
+            int id = 1000 + rand.nextInt(9000);  // random order id between 1000–9999
+            long timestamp = System.currentTimeMillis() - rand.nextInt(1000000); 
+            // random timestamp within ~last 11 days
+            
+            orders[i] = new CustomerOrder(id, timestamp);
+        }
+
+        System.out.println("\nGenerated Orders (Unsorted):");
+        for (CustomerOrder order : orders) {
+            System.out.println(order);
+        }
+
+        MergeSortOrders sorter = new MergeSortOrders();
+        sorter.sort(orders);
+
+        System.out.println("\nSorted Orders by Timestamp:");
+        for (CustomerOrder order : orders) {
+            System.out.println(order);
+        }
+
+        sc.close();
+    }
+}
+
+
