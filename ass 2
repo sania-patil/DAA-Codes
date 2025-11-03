@@ -1,0 +1,114 @@
+import java.util.*;
+
+class Movie {
+    String title;
+    double rating;
+    int year;
+    int popularity;
+
+    Movie(String title, double rating, int year, int popularity) {
+        this.title = title;
+        this.rating = rating;
+        this.year = year;
+        this.popularity = popularity;
+    }
+
+    @Override
+    public String toString() {
+        return title + " | Rating: " + rating + " | Year: " + year + " | Popularity: " + popularity;
+    }
+}
+
+class QuickSortMovies {
+
+    public void quickSort(Movie[] movies, int low, int high, String criteria) {
+        if (low < high) {
+            int pi = partition(movies, low, high, criteria);
+            quickSort(movies, low, pi - 1, criteria);
+            quickSort(movies, pi + 1, high, criteria);
+        }
+    }
+
+    private int partition(Movie[] movies, int low, int high, String criteria) {
+        Movie pivot = movies[low];
+        int i = low;
+        int j = high;
+
+        while (i < j) {
+            while (i <= high && compare(movies[i], pivot, criteria) <= 0) {
+                i++;
+            }
+            while (j >= low && compare(movies[j], pivot, criteria) > 0) {
+                j--;
+            }
+            if (i < j) {
+                swap(movies, i, j);
+            }
+        }
+        swap(movies, low, j);
+        return j;
+    }
+
+    private int compare(Movie m1, Movie m2, String criteria) {
+        switch (criteria.toLowerCase()) {
+            case "rating":
+                return Double.compare(m1.rating, m2.rating);
+            case "year":
+                return Integer.compare(m1.year, m2.year);
+            case "popularity":
+                return Integer.compare(m1.popularity, m2.popularity);
+            default:
+                return m1.title.compareTo(m2.title);
+        }
+    }
+
+    private void swap(Movie[] movies, int i, int j) {
+        Movie temp = movies[i];
+        movies[i] = movies[j];
+        movies[j] = temp;
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        // Taking number of movies
+        System.out.print("Enter number of movies: ");
+        int n = sc.nextInt();
+        sc.nextLine(); // consume newline
+
+        Movie[] movies = new Movie[n];
+
+        // Taking movie details
+        for (int i = 0; i < n; i++) {
+            System.out.println("Enter details for Movie " + (i + 1) + ":");
+            System.out.print("Title: ");
+            String title = sc.nextLine();
+            System.out.print("Rating: ");
+            double rating = sc.nextDouble();
+            System.out.print("Year: ");
+            int year = sc.nextInt();
+            System.out.print("Popularity (watch count): ");
+            int popularity = sc.nextInt();
+            sc.nextLine(); // consume newline
+
+            movies[i] = new Movie(title, rating, year, popularity);
+        }
+
+        // Taking sorting criteria
+        System.out.print("Enter sorting criteria (rating/year/popularity/title): ");
+        String criteria = sc.nextLine();
+
+        // Sorting
+        QuickSortMovies sorter = new QuickSortMovies();
+        sorter.quickSort(movies, 0, movies.length - 1, criteria);
+
+        // Printing result
+        System.out.println("\nMovies sorted by " + criteria + ":");
+        for (Movie m : movies) {
+            System.out.println(m);
+        }
+
+        sc.close();
+    }
+}
+
