@@ -1,0 +1,183 @@
+import java.util.*; 
+class Edge { 
+int to; 
+double baseCost; 
+double curCost; 
+Edge(int to, double baseCost) { 
+this.to = to; 
+this.baseCost = baseCost; 
+this.curCost = baseCost; 
+} 
+} 
+public class SwiftCargoLogistics { 
+static final double INF = 1e30; 
+public static void main(String[] args) { 
+Scanner sc = new Scanner(System.in); 
+// Input: number of stages 
+System.out.print("Enter number of stages: "); 
+int S = sc.nextInt(); 
+int[] stageCount = new int[S]; 
+long N = 0; 
+System.out.print("Enter number of nodes in each stage (" + S + " values): "); 
+for (int i = 0; i < S; i++) { 
+stageCount[i] = sc.nextInt(); 
+N+= stageCount[i]; 
+} 
+int[] stageStart = new int[S]; 
+int idx = 0; 
+for (int i = 0; i < S; i++) { 
+stageStart[i] = idx; 
+idx += stageCount[i]; 
+} 
+// Input: number of edges 
+System.out.print("Enter number of edges: "); int M = sc.nextInt(); 
+List<List<Edge>> adj = new ArrayList<>(); 
+List<List<Integer>> revAdj = new ArrayList<>(0); 
+for (int i = 0; i < N; i++) { 
+adj.add(new ArrayList<>()); 
+revAdj.add(new ArrayList<>()); 
+System.out.println("Enter each edge as: u v cost"); 
+for (int i = 0; i < M; i++) { 
+int u = sc.nextInt(); 
+int v = sc.nextInt(); 
+double cost = sc.nextDouble(); 
+if (u < 0 || u >= N || v <0 || v >= N) { 
+} 
+System.out.println("Invalid edge node id"); 
+return; 
+adj.get(u).add(new Edge(v, cost)); revAdj.get(v).add(u); 
+} 
+// Initialize best costs and next nodes 
+double[] bestCost = new double[(int) N]; int[] nextNode = new int[(int) N]; Arrays.fill(bestCost, INF); Arrays.fill(nextNode, -1); 
+// Sink stage nodes have cost = 0 
+int lastStage = S-1; 
+for (int k = 0; k < stageCount[lastStage]; k++) { 
+} 
+int node = stageStart[lastStage] + k; 
+bestCost[node] = 0.0; 
+nextNode[node] = -1; 
+// Dynamic Programming (Backward) 
+= 
+for (int st S - 2; st >= 0; st--) { 
+for (int k = 0; k < stageCount[st]; k++) { 
+int u = stageStart[st] + k; 
+double best = INF; 
+int besty = -1; 
+for (Edge e adj.get(u)) { 
+} 
+int v = e.to; 
+double cost = e.curCost; 
+if (bestCost[v] + cost < best) { 
+best = bestCost[v] + cost; 
+bestv=v; 
+} 
+} 
+bestCost[u] = best; 
+nextNode[u] = bestv; 
+// Output results from Stage 0 
+System.out.println("\nBest costs from Stage-0 nodes:"); 
+for (int k = 0; k < stageCount[0]; k++) { 
+int u = stageStart[0] + k; 
+if (bestCost[u] >= INF / 2) 
+System.out.println("Node " + u + ": unreachable"); 
+else 
+System.out.println("Node " + u + ": cost = " + bestCost[u]); 
+// Retrieve a path 
+System.out.print("\nEnter a source node id (in stage 0) to print path, or -1 to skip: "); 
+int src=sc.nextInt(); 
+if (src = 0 && src < N) { 
+if (bestCost[src] >= INF / 2) { 
+System.out.println("No route from " + src); 
+} else { 
+} 
+printPath(src, nextNode, adj); 
+System.out.println("Total route cost: " + bestCost[src]); 
+// Handle real-time updates 
+System.out.print("\nEnter number of live updates to edge costs (0 to finish): "); 
+int Q = sc.nextInt(); 
+while (Q--> 0) { 
+System.out.print("Enter edge update (u v multiplier): "); 
+int u = sc.nextInt(); 
+int v = sc.nextInt(); 
+double multiplier = sc.nextDouble(); 
+// Update edge weights 
+} 
+for (Edge e : adj.get(u)) { 
+if (e.to == v) { 
+} 
+e.curCost = e.baseCost* multiplier; 
+} 
+// Recompute using incremental updates 
+recompute AfterUpdate(adj, revAdj, bestCost, nextNode, u); 
+// Final output after updates 
+System.out.println("\nAfter updates, best costs from Stage-0 nodes:"); 
+for (int k = 0; k < stageCount[0]; k++) { 
+int u = stageStart[0] + k; 
+if (bestCost[u] >= INF / 2) 
+System.out.println("Node " + u + ": unreachable"); 
+else 
+System.out.println("Node " + u + ": cost = " + bestCost[u]); 
+// Reprint path after updates 
+System.out.print("\nEnter a source node id (in stage 0) to print path, or -1 to skip: "); src = sc.nextInt(); 
+>= 
+if (src = 0 && src <N) { 
+if (bestCost[src] >= INF / 2) { 
+System.out.println("No route from " + src); 
+} else { 
+printPath(src, nextNode, adj); 
+System.out.println("Total route cost: " + bestCost[src]); 
+} 
+} 
+sc.close(); 
+// Path reconstruction 
+static void printPath(int src, int[] nextNode, List<List<Edge>> adj) { 
+System.out.print("Path from " + src + ": "); 
+int cur = src; 
+while (cur != -1) { 
+System.out.print(cur); 
+int nxt = nextNode[cur]; if (nxt != -1) { 
+double edgeCost = 0; 
+for (Edge e adj.get(cur)) { 
+if (e.to == nxt) { 
+edgeCost = e.curCost; 
+break; 
+} 
+} 
+System.out.print(" -> "); 
+} else break; 
+cur = nxt; 
+} 
+System.out.println(); 
+} 
+// Recompute after traffic update 
+static void recomputeAfterUpdate(List<List<Edge>> adj, List<List<Integer>> revAdj, 
+double[] bestCost, int[] nextNode, int u) { 
+Queue<Integer> queue = new LinkedList<>(); 
+double newCostU = recomputeNode(u, adj, bestCost, nextNode); 
+if (Math.abs(newCostU - bestCost[u]) > 1e-9) { 
+bestCost[u] = newCostU; 
+queue.add(u); 
+} 
+while (!queue.isEmpty()) { 
+int node = queue.poll(); 
+for (int pred revAdj.get(node)) { 
+double newCost = recomputeNode(pred, adj, bestCost, nextNode); 
+if (Math.abs(newCost - bestCost[pred]) > 1e-9) { 
+bestCost[pred] = newCost; 
+queue.add(pred); 
+} 
+} 
+} 
+static double recomputeNode(int node, List<List<Edge>> adj, double[] bestCost, int[] nextNode) { 
+double best = INF; 
+int besty = -1; 
+for (Edge e : adj.get(node)) { 
+if (bestCost[e.to] >= INF / 2) continue; double cand = e.curCost + bestCost[e.to]; 
+if (cand < best) { 
+best = cand; 
+bestv = e.to; 
+} 
+} 
+} 
+nextNode[node] = bestv; 
+return best; 
