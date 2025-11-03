@@ -1,0 +1,129 @@
+import java.util.*;
+
+public class ExamSchedulerSimple {
+
+    // ---------------- Build Graph ----------------
+    // Graph: adjacency list of conflicts between courses
+    static List<List<Integer>> buildGraph(int numCourses, Map<Integer, List<Integer>> studentCourses) {
+        List<List<Integer>> graph = new ArrayList<>();
+        for (int i = 0; i < numCourses; i++) graph.add(new ArrayList<>());
+
+        // For each student, add edges between all courses they take
+        for (List<Integer> courses : studentCourses.values()) {
+            int k = courses.size();
+            for (int i = 0; i < k; i++) {
+                for (int j = i + 1; j < k; j++) {
+                    int a = courses.get(i);
+                    int b = courses.get(j);
+                    if (!graph.get(a).contains(b)) graph.get(a).add(b);
+                    if (!graph.get(b).contains(a)) graph.get(b).add(a);
+                }
+            }
+        }
+        return graph;
+    }
+
+    // ---------------- Greedy Coloring ----------------
+    static int[] greedyColoring(List<List<Integer>> graph) {
+        int n = graph.size();
+        int[] colors = new int[n];
+        Arrays.fill(colors, -1);
+
+        colors[0] = 0; // first course gets slot 0
+
+        for (int u = 1; u < n; u++) {
+            boolean[] used = new boolean[n];
+            for (int v : graph.get(u)) {
+                if (colors[v] != -1) used[colors[v]] = true;
+            }
+            int c;
+            for (c = 0; c < n; c++) if (!used[c]) break;
+            colors[u] = c;
+        }
+        return colors;
+    }
+
+    // ---------------- Welsh-Powell Coloring ----------------
+    static int[] welshPowellColoring(List<List<Integer>> graph) {
+        int n = graph.size();
+        int[] colors = new int[n];
+        Arrays.fill(colors, -1);
+
+        Integer[] order = new Integer[n];
+        for (int i = 0; i < n; i++) order[i] = i;
+
+        // Sort courses by descending degree (number of conflicts)
+        Arrays.sort(order, (a, b) -> graph.get(b).size() - graph.get(a).size());
+
+        int color = 0;
+        for (int i = 0; i < n; i++) {
+            int u = order[i];
+            if (colors[u] != -1) continue;
+            colors[u] = color;
+            for (int j = i + 1; j < n; j++) {
+                int v = order[j];
+                if (colors[v] == -1) {
+                    boolean conflict = false;
+                    for (int adj : graph.get(v)) {
+                        if (colors[adj] == color) {
+                            conflict = true;
+                            break;
+                        }
+                    }
+                    if (!conflict) colors[v] = color;
+                }
+            }
+            color++;
+        }
+        return colors;
+    }
+
+    // ---------------- Utility: count number of slots used ----------------
+    static int countColors(int[] colors) {
+        Set<Integer> set = new HashSet<>();
+        for (int c : colors) set.add(c);
+        return set.size();
+    }
+
+    // ---------------- Main Function ----------------
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter number of courses: ");
+        int numCourses = sc.nextInt();
+        System.out.print("Enter number of students: ");
+        int numStudents = sc.nextInt();
+
+        Map<Integer, List<Integer>> studentCourses = new HashMap<>();
+        System.out.println("Enter student enrollments (studentId courseCount course1 course2 ...):");
+        for (int s = 0; s < numStudents; s++) {
+            int studentId = sc.nextInt();
+            int count = sc.nextInt();
+            List<Integer> courses = new ArrayList<>();
+            for (int i = 0; i < count; i++) {
+                int c = sc.nextInt();
+                courses.add(c);
+            }
+            studentCourses.put(studentId, courses);
+        }
+
+        // Build conflict graph
+        List<List<Integer>> graph = buildGraph(numCourses, studentCourses);
+
+        // Greedy Coloring
+        int[] greedyColors = greedyColoring(graph);
+        System.out.println("\n--- Greedy Coloring ---");
+        System.out.println("Number of slots used: " + countColors(greedyColors));
+        for (int i = 0; i < numCourses; i++)
+            System.out.println("Course " + i + " -> Slot " + greedyColors[i]);
+
+        // Welsh-Powell Coloring
+        int[] wpColors = welshPowellColoring(graph);
+        System.out.println("\n--- Welsh-Powell Coloring ---");
+        System.out.println("Number of slots used: " + countColors(wpColors));
+        for (int i = 0; i < numCourses; i++)
+            System.out.println("Course " + i + " -> Slot " + wpColors[i]);
+
+        sc.close();
+    }
+}
