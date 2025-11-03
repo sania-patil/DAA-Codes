@@ -1,0 +1,117 @@
+import java.util.*;
+
+public class TSPBranchAndBound {
+
+    static class Node implements Comparable<Node> {
+        int level;       // Level in the search tree (number of cities visited)
+        int pathCost;    // Cost accumulated so far
+        int bound;       // Lower bound of cost to complete the tour
+        List<Integer> path; // Cities visited so far
+
+        Node(int level, int pathCost, List<Integer> path) {
+            this.level = level;
+            this.pathCost = pathCost;
+            this.path = new ArrayList<>(path);
+        }
+
+        @Override
+        public int compareTo(Node o) {
+            return this.bound - o.bound; // Min-heap based on bound
+        }
+    }
+
+    // Compute lower bound for a node
+    static int calculateBound(Node node, int[][] costMatrix, int N) {
+        int bound = node.pathCost;
+        boolean[] visited = new boolean[N];
+        for (int city : node.path) visited[city] = true;
+
+        // Add minimum outgoing edge for unvisited cities
+        for (int i = 0; i < N; i++) {
+            if (!visited[i]) {
+                int min = Integer.MAX_VALUE;
+                for (int j = 0; j < N; j++) {
+                    if (i != j && !visited[j] && costMatrix[i][j] < min) {
+                        min = costMatrix[i][j];
+                    }
+                }
+                // If all remaining cities are visited, pick minimum edge to any city
+                if (min == Integer.MAX_VALUE) {
+                    for (int j = 0; j < N; j++) {
+                        if (i != j && costMatrix[i][j] < min) min = costMatrix[i][j];
+                    }
+                }
+                bound += min;
+            }
+        }
+        return bound;
+    }
+
+    static void tspLCBB(int[][] costMatrix) {
+        int N = costMatrix.length;
+        PriorityQueue<Node> pq = new PriorityQueue<>();
+        List<Integer> path0 = new ArrayList<>();
+        path0.add(0); // Start from city 0
+        Node root = new Node(0, 0, path0);
+        root.bound = calculateBound(root, costMatrix, N);
+        pq.add(root);
+
+        int minCost = Integer.MAX_VALUE;
+        List<Integer> bestPath = null;
+
+        while (!pq.isEmpty()) {
+            Node curr = pq.poll();
+
+            if (curr.bound >= minCost) continue; // Prune
+
+            if (curr.level == N - 1) {
+                // Complete tour by returning to start
+                int lastCity = curr.path.get(curr.path.size() - 1);
+                int totalCost = curr.pathCost + costMatrix[lastCity][0];
+                if (totalCost < minCost) {
+                    minCost = totalCost;
+                    bestPath = new ArrayList<>(curr.path);
+                    bestPath.add(0);
+                }
+                continue;
+            }
+
+            int lastCity = curr.path.get(curr.path.size() - 1);
+            for (int nextCity = 0; nextCity < N; nextCity++) {
+                if (!curr.path.contains(nextCity)) {
+                    List<Integer> newPath = new ArrayList<>(curr.path);
+                    newPath.add(nextCity);
+                    int newCost = curr.pathCost + costMatrix[lastCity][nextCity];
+                    Node child = new Node(curr.level + 1, newCost, newPath);
+                    child.bound = calculateBound(child, costMatrix, N);
+                    if (child.bound < minCost) pq.add(child);
+                }
+            }
+        }
+
+        // Print solution
+        System.out.println("\nOptimal TSP route:");
+        for (int i = 0; i < bestPath.size(); i++) {
+            if (i > 0) System.out.print(" -> ");
+            System.out.print(bestPath.get(i));
+        }
+        System.out.println("\nTotal minimum cost: " + minCost);
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter number of cities: ");
+        int N = sc.nextInt();
+        int[][] costMatrix = new int[N][N];
+
+        System.out.println("Enter cost/distance matrix row by row:");
+        for (int i = 0; i < N; i++)
+            for (int j = 0; j < N; j++)
+                costMatrix[i][j] = sc.nextInt();
+
+        tspLCBB(costMatrix);
+        sc.close();
+    }
+}
+
