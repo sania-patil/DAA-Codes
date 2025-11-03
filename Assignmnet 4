@@ -1,0 +1,69 @@
+import java.util.*;
+
+class Edge {
+    int to, weight;
+    Edge(int to, int weight) {
+        this.to = to;
+        this.weight = weight;
+    }
+}
+
+public class SmartTraffic {
+
+    // Dijkstra's Algorithm
+    Static void dijkstra(int n, List<List<Edge>> graph, int source) {
+        int[] dist = new int[n];
+        Arrays.fill(dist, Integer.MAX_VALUE);
+        dist[source] = 0;
+
+        // Priority queue of [node, distance], ordered by distance (smallest first)
+        PriorityQueue<int[]> pq = new PriorityQueue<>(Comparator.comparingInt(a -> a[1]));
+        pq.add(new int[]{source, 0});
+
+        while (!pq.isEmpty()) {
+            int[] curr = pq.poll();
+            int node = curr[0], d = curr[1];
+
+            // Skip outdated pair
+            if (d > dist[node]) continue;
+
+            for (Edge edge : graph.get(node)) {
+                int newDist = d + edge.weight;
+                if (newDist < dist[edge.to]) {
+                    dist[edge.to] = newDist;
+                    pq.add(new int[]{edge.to, newDist});
+                }
+            }
+        }
+
+        // Print shortest time to each node
+        System.out.println("Shortest travel time from source:");
+        for (int i = 0; i < n; i++) {
+            if (dist[i] == Integer.MAX_VALUE) {
+                System.out.println("Node " + i + " -> unreachable");
+            } else {
+                System.out.println("Node " + i + " -> " + dist[i] + " minutes");
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        int n = 6; // number of intersections
+        List<List<Edge>> graph = new ArrayList<>();
+        for (int i = 0; i < n; i++) graph.add(new ArrayList<>());
+
+        // Example directed roads (if undirected, add reverse edges as well)
+        graph.get(0).add(new Edge(1, 4));
+        graph.get(0).add(new Edge(2, 2));
+        graph.get(1).add(new Edge(2, 5));
+        graph.get(1).add(new Edge(3, 10));
+        graph.get(2).add(new Edge(4, 3));
+        graph.get(4).add(new Edge(3, 4));
+        graph.get(3).add(new Edge(5, 11));
+
+        int source = 0; // ambulance current location
+        dijkstra(n, graph, source);
+    }
+}
+
+
