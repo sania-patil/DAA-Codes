@@ -1,0 +1,121 @@
+import java.util.*;
+
+class Item {
+    String name;
+    int weight;
+    int value;
+    boolean perishable;
+
+    Item(String name, int weight, int value, boolean perishable) {
+        this.name = name;
+        this.weight = weight;
+        this.value = value;
+        this.perishable = perishable;
+    }
+}
+
+public class DisasterReliefKnapsack {
+
+    // ---------------- Dynamic Programming (0/1 Knapsack) ----------------
+    public static int knapsackDP(Item[] items, int W, boolean[] selected) {
+        int n = items.length;
+        int[][] dp = new int[n + 1][W + 1];
+
+        for (int i = 1; i <= n; i++) {
+            for (int w = 1; w <= W; w++) {
+                if (items[i - 1].weight <= w) {
+                    dp[i][w] = Math.max(
+                        items[i - 1].value + dp[i - 1][w - items[i - 1].weight],
+                        dp[i - 1][w]
+                    );
+                } else {
+                    dp[i][w] = dp[i - 1][w];
+                }
+            }
+        }
+
+        // Backtrack to find selected items
+        int w = W;
+        for (int i = n; i > 0; i--) {
+            if (dp[i][w] != dp[i - 1][w]) {
+                selected[i - 1] = true;
+                w -= items[i - 1].weight;
+            }
+        }
+
+        return dp[n][W];
+    }
+
+    // ---------------- Greedy Approach (Approximation) ----------------
+    public static int greedyApproach(Item[] items, int W) {
+        Arrays.sort(items, (a, b) -> Double.compare(
+            (double) b.value / b.weight, (double) a.value / a.weight
+        ));
+
+        int totalValue = 0, totalWeight = 0;
+
+        for (Item item : items) {
+            if (totalWeight + item.weight <= W) {
+                totalWeight += item.weight;
+                totalValue += item.value;
+            }
+        }
+        return totalValue;
+    }
+
+    // ---------------- Main Function ----------------
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter number of available items: ");
+        int n = sc.nextInt();
+
+        System.out.print("Enter maximum truck capacity (in kg): ");
+        int W = sc.nextInt();
+
+        Item[] items = new Item[n];
+
+        System.out.println("\nEnter item details:");
+        System.out.println("(Name Weight(kg) UtilityValue Perishable[true/false])");
+
+        for (int i = 0; i < n; i++) {
+            System.out.print("Item " + (i + 1) + ": ");
+            String name = sc.next();
+            int weight = sc.nextInt();
+            int value = sc.nextInt();
+            boolean perishable = sc.nextBoolean();
+            items[i] = new Item(name, weight, value, perishable);
+        }
+
+        // Priority boost for perishable items
+        for (Item item : items) {
+            if (item.perishable) {
+                item.value += 5; // bonus for perishable supplies
+            }
+        }
+
+        boolean[] selected = new boolean[n];
+        int maxValue = knapsackDP(items, W, selected);
+
+        System.out.println("\n===== OPTIMAL SOLUTION (Dynamic Programming) =====");
+        System.out.println("Maximum Utility Value: " + maxValue);
+        System.out.println("Items to include in truck:");
+
+        int totalWeight = 0;
+        for (int i = 0; i < n; i++) {
+            if (selected[i]) {
+                System.out.println(items[i].name + " (Weight: " + items[i].weight + "kg, Value: " + items[i].value + ")");
+                totalWeight += items[i].weight;
+            }
+        }
+
+        System.out.println("Total Weight Used: " + totalWeight + "/" + W + " kg");
+
+        // Comparison with Greedy Approach
+        int greedyValue = greedyApproach(Arrays.copyOf(items, items.length), W);
+        System.out.println("\n===== GREEDY APPROACH (Approximation) =====");
+        System.out.println("Estimated Utility Value: " + greedyValue);
+
+        sc.close();
+    }
+}
